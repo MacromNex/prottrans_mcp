@@ -178,10 +178,6 @@ predictions = prottrans_predict_fitness(
 print(f"Test Spearman: {predictions['metrics']['spearman_r']:.3f}")
 ```
 
-## Documentation
-
-See [MCP_API_GUIDE.md](MCP_API_GUIDE.md) for detailed API documentation, examples, and best practices.
-
 ## Requirements
 
 - PyTorch with CUDA support (recommended)
