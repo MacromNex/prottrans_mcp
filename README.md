@@ -3,7 +3,7 @@
 ProtTrans MCP server for protein modeling, extracted from the official ProtTrans tutorial.
 
 ## Overview
-This ProtTrans MCP server provides comprehensive protein structure analysis tools using ProtTrans models. Here we have 4 main scripts for comprehensive protein analysis:
+This ProtTrans MCP server provides comprehensive protein structure analysis tools using ProtTrans models. Here we have 4 main scripts for comprehensive protein analysis.
 
 
 ## Installation
@@ -43,8 +43,8 @@ python scripts/prottrans_llh.py -i example/data.csv -w example/wt.fasta
 
 ### Install ProtTrans MCP Server
 ```shell
-fastmcp install claude-code mcp-servers/prottrans_mcp/src/prottrans_mcp.py --python mcp-servers/prottrans_mcp/env/bin/python
-fastmcp install gemini-cli mcp-servers/prottrans_mcp/src/prottrans_mcp.py --python mcp-servers/prottrans_mcp/env/bin/python
+fastmcp install claude-code tool-mcps/prottrans_mcp/src/prottrans_mcp.py --python tool-mcps/prottrans_mcp/env/bin/python
+fastmcp install gemini-cli tool-mcps/prottrans_mcp/src/prottrans_mcp.py --python tool-mcps/prottrans_mcp/env/bin/python
 ```
 
 ### Call ProtTrans MCP service
