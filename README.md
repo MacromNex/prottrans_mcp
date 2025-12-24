@@ -54,6 +54,7 @@ Can you help train a ProtTrans model for data @examples/case2.1_subtilisin/ and 
 @examples/case2.1_subtilisin/prot-t5_fitness using the ProtTrans mcp server with ProtT5-XL model.
 
 Please convert the relative path to absolution path before calling the MCP servers. 
+Please create the embeddings if it not ready.
 ```
 2. Inference ProtTrans likelihoods
 ```markdown
