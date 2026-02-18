@@ -74,10 +74,6 @@ jobs:
           # Remove torchaudio if present
           rm -rf $SP/torchaudio
 
-          # Remove test directories inside site-packages
-          find $SP -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
-          find $SP -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true
-
           echo "=== After pre-pack cleanup ==="
           du -sh ./env
 
@@ -85,7 +81,7 @@ jobs:
         shell: bash -el {0}
         run: |
           conda install -n base conda-pack -y
-          $(conda info --base)/bin/conda-pack -p ./env -o prottrans_mcp-env.tar.gz --ignore-editable-packages --force
+          $(conda info --base)/bin/conda-pack -p ./env -o prottrans_mcp-env.tar.gz --ignore-editable-packages
           ls -lh prottrans_mcp-env.tar.gz
 
       - name: Post-pack slim (strip, caches, metadata)
@@ -109,6 +105,10 @@ jobs:
 
           # Remove __pycache__ directories
           find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
+          # Remove test directories
+          find ./lib/python3.10/site-packages -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
+          find ./lib/python3.10/site-packages -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true
 
           # Remove .dist-info directories
           find ./lib/python3.10/site-packages -maxdepth 1 -type d -name '*.dist-info' -exec rm -rf {} + 2>/dev/null || true
