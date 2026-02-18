@@ -127,7 +127,7 @@ if [ "$SKIP_ENV" = true ]; then
 else
     info "Installing all dependencies (PyTorch + ML + MCP)..."
     "${ENV_DIR}/bin/pip" install \
-        torch==2.6.0 torchvision torchaudio \
+        torch==2.6.0 \
         --index-url https://download.pytorch.org/whl/${CUDA_VERSION}
     "${ENV_DIR}/bin/pip" install \
         transformers sentencepiece pandas loguru scikit-learn xgboost biopython sniffio \

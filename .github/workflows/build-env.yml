@@ -35,17 +35,97 @@ jobs:
         shell: bash -el {0}
         run: |
           ./env/bin/pip install \
-            torch==2.6.0 torchvision torchaudio \
+            torch==2.6.0 \
             --index-url https://download.pytorch.org/whl/cu118
           ./env/bin/pip install \
             transformers sentencepiece pandas loguru scikit-learn xgboost biopython sniffio
           ./env/bin/pip install --ignore-installed fastmcp
+
+      - name: Slim environment
+        shell: bash -el {0}
+        run: |
+          echo "=== Before cleanup ==="
+          du -sh ./env
+
+          # 1. Remove duplicate CUDA libs from env/lib/ (torch resolves from nvidia/*/lib/)
+          find ./env/lib/ -maxdepth 1 \( \
+            -name 'libcublas*' -o -name 'libcufft*' -o -name 'libcusolver*' \
+            -o -name 'libcusparse*' -o -name 'libnvrtc*' \
+          \) -delete 2>/dev/null || true
+
+          # 2. Remove triton (only needed for torch.compile, not used by ProtTrans)
+          ./env/bin/pip uninstall -y triton 2>/dev/null || true
+          rm -rf ./env/lib/python3.10/site-packages/triton
+
+          # 3. Remove unused MKL variants (torch uses mkl_rt -> core + intel_thread only)
+          find ./env/lib/ -maxdepth 1 \( \
+            -name 'libmkl_pgi*' -o -name 'libmkl_tbb*' -o -name 'libmkl_gnu*' \
+            -o -name 'libmkl_sequential*' -o -name 'libmkl_scalapack*' \
+            -o -name 'libmkl_blacs*' -o -name 'libmkl*ilp64*' \
+          \) -delete 2>/dev/null || true
+
+          # 4. Remove NPP libraries (image processing, unused)
+          find ./env -name 'libnpp*' -delete 2>/dev/null || true
+
+          # 5. Remove __pycache__ directories (regenerated on first import)
+          find ./env -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
+          # 6. Remove NCCL (multi-GPU distributed, not needed for single-GPU inference)
+          find ./env -name 'libnccl*' -delete 2>/dev/null || true
+          rm -rf ./env/lib/python3.10/site-packages/nvidia/nccl
+
+          # 7. Remove CUDA toolkit targets/ directory (headers/stubs, not runtime)
+          find ./env -type d -name 'targets' -path '*/nvidia/*' -exec rm -rf {} + 2>/dev/null || true
+
+          # 8. Remove test directories
+          find ./env/lib/python3.10/site-packages -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
+          find ./env/lib/python3.10/site-packages -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true
+
+          # 9. Remove profiling libs (nvperf, cupti_static)
+          find ./env -name 'libnvperf*' -delete 2>/dev/null || true
+          find ./env -name 'libcupti_static*' -delete 2>/dev/null || true
+
+          # 10. Remove torch C++ headers (only for building extensions)
+          rm -rf ./env/lib/python3.10/site-packages/torch/include
+
+          # 11. Remove nvidia/cuda_cupti pip package (profiling only)
+          rm -rf ./env/lib/python3.10/site-packages/nvidia/cuda_cupti
+
+          # 12. Remove pip, setuptools, wheel (not needed in packed env)
+          ./env/bin/pip uninstall -y pip setuptools wheel 2>/dev/null || true
+
+          # 13. Remove torchaudio if present
+          rm -rf ./env/lib/python3.10/site-packages/torchaudio
+
+          # 14. Remove .dist-info directories (package metadata)
+          find ./env/lib/python3.10/site-packages -maxdepth 1 -type d -name '*.dist-info' -exec rm -rf {} + 2>/dev/null || true
+
+          # 15. Strip debug symbols from .so files
+          find ./env -name '*.so' -exec strip --strip-debug {} + 2>/dev/null || true
+
+          echo "=== After cleanup ==="
+          du -sh ./env
 
       - name: Pack environment
         shell: bash -el {0}
         run: |
           conda install -n base conda-pack -y
           $(conda info --base)/bin/conda-pack -p ./env -o prottrans_mcp-env.tar.gz --ignore-editable-packages
+          ls -lh prottrans_mcp-env.tar.gz
+
+      - name: Split tarball if over 1.9GB
+        run: |
+          FILE=prottrans_mcp-env.tar.gz
+          MAX_BYTES=$((1900 * 1024 * 1024))  # 1.9GB
+          FILE_SIZE=$(stat --format=%s "$FILE")
+          if [ "$FILE_SIZE" -gt "$MAX_BYTES" ]; then
+            echo "Tarball is ${FILE_SIZE} bytes (> 1.9GB), splitting..."
+            split -b 1900m "$FILE" "${FILE}.part-"
+            rm "$FILE"
+            ls -lh ${FILE}.part-*
+          else
+            echo "Tarball is ${FILE_SIZE} bytes, no split needed"
+          fi
 
       - name: Determine release tag
         id: tag
@@ -62,21 +142,13 @@ jobs:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: "Conda Environment ${{ steps.tag.outputs.tag }}"
           body: |
-            Pre-packaged conda environment for `prottrans_mcp`.
+            Pre-packaged conda environment for `prottrans_mcp` (CUDA cu118).
 
-            **Usage in quick_setup.sh:**
+            **Usage:**
             ```bash
             USE_PACKED_ENVS=1 bash quick_setup.sh
             ```
-
-            **Usage in Google Colab:**
-            ```python
-            import os, subprocess
-            url = "https://github.com/<owner>/<repo>/releases/download/${{ steps.tag.outputs.tag }}/prottrans_mcp-env.tar.gz"
-            subprocess.run(["wget", "-q", url])
-            os.makedirs("prottrans_mcp/env", exist_ok=True)
-            subprocess.run(["tar", "xzf", "prottrans_mcp-env.tar.gz", "-C", "prottrans_mcp/env"])
-            subprocess.run(["bash", "-c", "source prottrans_mcp/env/bin/activate && conda-unpack"])
-            ```
-          files: prottrans_mcp-env.tar.gz
-          fail_on_unmatched_files: true
+          files: |
+            prottrans_mcp-env.tar.gz
+            prottrans_mcp-env.tar.gz.part-*
+          fail_on_unmatched_files: false

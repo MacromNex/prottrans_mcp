@@ -1,6 +1,4 @@
 torch==2.6.0
-torchvision
-torchaudio
 transformers
 sentencepiece
 pandas
