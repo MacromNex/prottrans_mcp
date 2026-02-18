@@ -6,7 +6,7 @@ ProtTrans MCP server for protein fitness modeling using ProtTrans protein langua
 
 ### Option 1: Docker (Recommended)
 
-Pull the pre-built image from GHCR and register as an MCP server. No local Python setup needed.
+Pull the pre-built GPU image from GHCR and register as an MCP server. No local Python setup needed.
 
 ```bash
 docker pull ghcr.io/macromnex/prottrans_mcp:latest
@@ -15,10 +15,10 @@ docker pull ghcr.io/macromnex/prottrans_mcp:latest
 Register in Claude Code:
 
 ```bash
-claude mcp add prottrans -- docker run --rm -i -v /path/to/data:/app/data ghcr.io/macromnex/prottrans_mcp:latest python src/server.py
+claude mcp add prottrans -- docker run --rm -i --gpus all -v /path/to/data:/app/data ghcr.io/macromnex/prottrans_mcp:latest python src/server.py
 ```
 
-> **Note:** The Docker image uses CPU-only PyTorch. Mount your data directory with `-v` so tools can read/write files on the host.
+> **Note:** Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) for GPU access (`--gpus all`). Mount your data directory with `-v` so tools can read/write files on the host.
 
 ### Option 2: Clone + Download Environment (Colab / Quick Start)
 

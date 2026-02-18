@@ -15,9 +15,9 @@ bash quick_setup.sh
 # Run the MCP server directly
 env/bin/python src/server.py
 
-# Docker (CPU-only PyTorch, for MCP serving)
+# Docker (GPU PyTorch, for MCP serving)
 docker build -t prottrans_mcp .
-docker run prottrans_mcp
+docker run --gpus all prottrans_mcp
 ```
 
 ## Architecture
@@ -38,7 +38,7 @@ docker run prottrans_mcp
 ## Dependencies
 
 - `fastmcp` is installed separately with `--ignore-installed` (conflicts with other packages otherwise)
-- `requirements.txt` has no `--index-url` — Docker uses CPU PyTorch (`--extra-index-url .../cpu`), conda env uses CUDA (`--index-url .../cu118`)
+- `requirements.txt` has no `--index-url` — Docker and conda env both use CUDA PyTorch (`--extra-index-url .../cu118`)
 - `multiprocessing.set_start_method('spawn', force=True)` is set in `server.py` (required for PyTorch + MCP)
 
 ## CI/CD

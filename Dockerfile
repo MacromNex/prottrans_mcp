@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install \
-    --extra-index-url https://download.pytorch.org/whl/cpu \
+    --extra-index-url https://download.pytorch.org/whl/cu118 \
     -r requirements.txt
 RUN pip install --no-cache-dir --prefix=/install --ignore-installed fastmcp
 
