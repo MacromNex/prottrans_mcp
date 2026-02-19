@@ -44,7 +44,6 @@ docker run --gpus all prottrans_mcp
 ## CI/CD
 
 - `.github/workflows/docker.yml` — Builds and pushes Docker image to GHCR on push to main or version tags
-- `.github/workflows/build-env.yml` — Packs conda env with CUDA PyTorch, uploads as GitHub Release on `envs-v*` tags
 
 ## Directories in .gitignore
 
